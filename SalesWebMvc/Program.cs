@@ -8,17 +8,41 @@ builder.Services.AddDbContext<SalesWebMvcContext>(options =>
         new MySqlServerVersion(new Version(8, 0, 34)), // Substitua a versão pelo número da versão do seu servidor MySQL
         builder => builder.MigrationsAssembly("SalesWebMvc")));
 
+builder.Services.AddScoped<SeedingService>();
+
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    if (app.Environment.IsDevelopment())
+    {
+        try
+        {
+            var seedingService = services.GetRequiredService<SeedingService>();
+            seedingService.Seed();  // Chame o método de seed aqui, se necessário.
+                                    // Restante do seu código...
+        }
+        catch (Exception ex)
+        {
+            // Lide com exceções, se necessário.
+            Console.WriteLine($"Erro: {ex.Message}");
+        }
 
+    }
+}
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
+}
+else
+{
+    app.UseDeveloperExceptionPage();
 }
 
 app.UseHttpsRedirection();
